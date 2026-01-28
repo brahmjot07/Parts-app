@@ -65,7 +65,7 @@
 
             <div id="results" class="hidden space-y-4">
                 <div id="shortResult" class="bg-blue-600 p-8 rounded-[2.5rem] text-white shadow-2xl"></div>
-                <div id="detailedResult" class="bg-slate-900 p-7 rounded-[2.5rem] text-white"></div>
+                <div id="detailedResult" class="bg-white p-7 rounded-[2.5rem] text-slate-800 border border-slate-100 shadow-lg"></div>
             </div>
         </div>
     </main>
@@ -103,7 +103,7 @@
             const payload = {
                 contents: [{
                     parts: [
-                        { text: "Identify this earthmoving machinery part. Provide a short summary and detailed technical specs in JSON format with 'short' and 'detailed' keys." },
+                        { text: "Identify this earthmoving machinery part. IMPORTANT: Provide the 'short' summary in friendly, plain English for a non-expert. In the 'detailed' section, explain what the part does, what machinery it belongs to, and signs that it might be failing, all in simple layman terms without technical jargon. Return as JSON with keys 'short' and 'detailed'." },
                         { inlineData: { mimeType: "image/png", data: base64Image } }
                     ]
                 }],
@@ -133,8 +133,32 @@
 
         function renderResults(data) {
             document.getElementById('results').classList.remove('hidden');
-            document.getElementById('shortResult').innerHTML = `<p class="text-lg font-bold italic">"${data.short}"</p>`;
-            document.getElementById('detailedResult').innerHTML = `<pre class="text-xs overflow-auto">${JSON.stringify(data.detailed, null, 2)}</pre>`;
+            
+            // Render Short Result (Header Style)
+            document.getElementById('shortResult').innerHTML = `
+                <span class="text-[10px] font-bold uppercase tracking-widest opacity-70 block mb-2">The Quick Answer</span>
+                <p class="text-xl font-bold italic leading-tight">"${data.short}"</p>
+            `;
+            
+            // Render Detailed Result (Clean Layman Style)
+            let detailsHtml = '<h3 class="text-blue-600 font-black text-sm uppercase tracking-widest mb-4">What you need to know</h3>';
+            
+            if (typeof data.detailed === 'object') {
+                for (const [key, value] of Object.entries(data.detailed)) {
+                    const cleanKey = key.replace(/_/g, ' ').toUpperCase();
+                    detailsHtml += `
+                        <div class="mb-4 last:mb-0">
+                            <h4 class="text-[10px] font-extrabold text-slate-400 tracking-wider mb-1">${cleanKey}</h4>
+                            <p class="text-sm font-semibold text-slate-700 leading-relaxed">${value}</p>
+                        </div>
+                    `;
+                }
+            } else {
+                detailsHtml += `<p class="text-sm font-semibold text-slate-700 leading-relaxed">${data.detailed}</p>`;
+            }
+            
+            document.getElementById('detailedResult').innerHTML = detailsHtml;
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
         }
 
         function showError(msg) {
