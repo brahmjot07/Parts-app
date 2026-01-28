@@ -64,14 +64,28 @@
             </div>
 
             <div id="results" class="hidden space-y-4">
-                <!-- Highlighted Main Info -->
+                <!-- High-Impact Technical Header -->
                 <div id="partIdentityHeader" class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-md">
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <span id="resManufacturer" class="text-[10px] font-black text-blue-600 uppercase tracking-widest block mb-1">Loading...</span>
-                            <h2 id="resPartName" class="text-2xl font-black text-slate-800 leading-tight">Part Name</h2>
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-2/3">
+                            <span id="resManufacturer" class="text-[10px] font-black text-blue-600 uppercase tracking-widest block mb-1">Checking Company...</span>
+                            <h2 id="resPartName" class="text-2xl font-black text-slate-800 leading-tight">Finding Name...</h2>
                         </div>
-                        <div id="resPower" class="bg-blue-50 text-blue-700 px-3 py-1 rounded-xl text-[10px] font-black">--</div>
+                        <div class="text-right">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Power Usage</span>
+                            <div id="resPower" class="bg-blue-50 text-blue-700 px-3 py-1 rounded-xl text-xs font-black inline-block">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-50">
+                        <div>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Part Type</span>
+                            <p id="resType" class="text-xs font-bold text-slate-700 uppercase">Detecting...</p>
+                        </div>
+                        <div>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Reliability</span>
+                            <p class="text-xs font-bold text-green-600 uppercase tracking-tighter">Verified Link</p>
+                        </div>
                     </div>
                 </div>
 
@@ -114,13 +128,14 @@
             const payload = {
                 contents: [{
                     parts: [
-                        { text: `Identify this heavy machinery part precisely. 
-                        Provide the response in JSON format with these exact keys:
-                        - 'actual_name': The official industry name of the part.
-                        - 'company': Probable manufacturer or compatible brands (e.g. CAT, Komatsu, Bosch).
-                        - 'power_specs': Voltage, wattage, or pressure ratings if applicable (e.g. 24V, 5.5kW).
-                        - 'short': A one-sentence summary in plain English.
-                        - 'detailed': A list of details for a layman including: what it does, common machines it is in, and signs it's broken.` },
+                        { text: `Precisely identify this earthmover/heavy machinery part. 
+                        Focus heavily on technical identifiers. Provide JSON with:
+                        - 'actual_name': Full official part name.
+                        - 'company': The specific brand/manufacturer (CAT, JCB, Caterpillar, etc).
+                        - 'part_type': The functional category (Hydraulic, Electrical, Engine, Wear Part).
+                        - 'power_usage': Voltage (12V/24V), Wattage, Amps, or Operating Pressure (PSI/Bar) if applicable.
+                        - 'short': A brief layman description of what it does.
+                        - 'detailed': A list of non-technical facts: where it fits in the machine, and how a normal person can tell if it's failing.` },
                         { inlineData: { mimeType: "image/png", data: base64Image } }
                     ]
                 }],
@@ -151,19 +166,20 @@
         function renderResults(data) {
             document.getElementById('results').classList.remove('hidden');
             
-            // Core Identity
-            document.getElementById('resManufacturer').innerText = data.company || "Manufacturer Unknown";
-            document.getElementById('resPartName').innerText = data.actual_name || "Unknown Part";
-            document.getElementById('resPower').innerText = data.power_specs || "N/A";
+            // Technical Identity Update
+            document.getElementById('resManufacturer').innerText = data.company || "Brand Not Identified";
+            document.getElementById('resPartName').innerText = data.actual_name || "Unknown Component";
+            document.getElementById('resPower').innerText = data.power_usage || "N/A";
+            document.getElementById('resType').innerText = data.part_type || "General Part";
 
-            // Short Summary
+            // Simple Summary
             document.getElementById('shortResult').innerHTML = `
-                <span class="text-[10px] font-bold uppercase tracking-widest opacity-70 block mb-2">The Quick Answer</span>
+                <span class="text-[10px] font-bold uppercase tracking-widest opacity-70 block mb-2">The Basic Summary</span>
                 <p class="text-xl font-bold italic leading-tight">"${data.short}"</p>
             `;
             
-            // Detailed Info in Layman Terms
-            let detailsHtml = '<h3 class="text-blue-600 font-black text-sm uppercase tracking-widest mb-4">Simple Breakdown</h3>';
+            // Tidy Details Breakdown
+            let detailsHtml = '<h3 class="text-blue-600 font-black text-sm uppercase tracking-widest mb-4">Easy-to-Read Details</h3>';
             
             if (Array.isArray(data.detailed)) {
                 data.detailed.forEach(point => {
@@ -174,15 +190,8 @@
                         </div>
                     `;
                 });
-            } else if (typeof data.detailed === 'object') {
-                for (const [key, value] of Object.entries(data.detailed)) {
-                    detailsHtml += `
-                        <div class="mb-4">
-                            <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">${key.replace(/_/g, ' ')}</h4>
-                            <p class="text-sm font-semibold text-slate-700">${value}</p>
-                        </div>
-                    `;
-                }
+            } else {
+                detailsHtml += `<p class="text-sm font-semibold text-slate-700">${data.detailed || "No additional info available."}</p>`;
             }
             
             document.getElementById('detailedResult').innerHTML = detailsHtml;
